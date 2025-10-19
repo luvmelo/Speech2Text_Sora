@@ -1,0 +1,36 @@
+# Java build artifacts
+/target/
+*.iml
+
+# IDE
+/.idea/
+.vscode/
+
+# Environment files
+/.env
+/.env.local
+.env.example
+
+# Dream records (generated JSON files)
+/web/dream-records/
+dream-records/
+
+# Generated videos
+/generated-videos/*.mp4
+/generated-videos/*.webm
+
+# Next.js build artifacts
+web/.next/
+web/out/
+web/build/
+web/.vercel
+
+# Node modules
+web/node_modules/
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

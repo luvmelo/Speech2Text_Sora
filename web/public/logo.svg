@@ -1,0 +1,56 @@
+<svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="dreamGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A78BFA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F472B6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Dream cloud shape -->
+  <g opacity="0.9">
+    <!-- Main cloud body -->
+    <ellipse cx="22" cy="22" rx="16" ry="14" fill="url(#dreamGradient)" opacity="0.3"/>
+    
+    <!-- Dream wave/aura effect -->
+    <path d="M 8 22 Q 10 18, 14 18 T 22 18 T 30 18 Q 34 18, 36 22" 
+          stroke="url(#dreamGradient)" 
+          stroke-width="2" 
+          fill="none" 
+          opacity="0.6"
+          stroke-linecap="round"/>
+    
+    <path d="M 8 26 Q 10 22, 14 22 T 22 22 T 30 22 Q 34 22, 36 26" 
+          stroke="url(#dreamGradient)" 
+          stroke-width="2" 
+          fill="none" 
+          opacity="0.5"
+          stroke-linecap="round"/>
+    
+    <path d="M 8 30 Q 10 26, 14 26 T 22 26 T 30 26 Q 34 26, 36 30" 
+          stroke="url(#dreamGradient)" 
+          stroke-width="2" 
+          fill="none" 
+          opacity="0.4"
+          stroke-linecap="round"/>
+    
+    <!-- Eye/lens symbol in center -->
+    <circle cx="22" cy="22" r="6" fill="url(#glowGradient)" opacity="0.5"/>
+    <circle cx="22" cy="22" r="4" stroke="url(#dreamGradient)" stroke-width="2" fill="none"/>
+    <circle cx="22" cy="22" r="2" fill="url(#dreamGradient)"/>
+    
+    <!-- Sparkle stars -->
+    <g opacity="0.8">
+      <circle cx="14" cy="12" r="1.5" fill="white" opacity="0.9"/>
+      <circle cx="30" cy="14" r="1" fill="white" opacity="0.7"/>
+      <circle cx="32" cy="28" r="1.2" fill="white" opacity="0.8"/>
+      <circle cx="12" cy="30" r="1" fill="white" opacity="0.6"/>
+    </g>
+  </g>
+</svg>
+
