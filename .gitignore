@@ -1,36 +1,131 @@
-# Java build artifacts
+# ============================================
+# Java / Maven
+# ============================================
 /target/
+*.class
+*.jar
+*.war
+*.ear
 *.iml
+.mvn/
+.m2/
 
-# IDE
+# ============================================
+# IDE / Editors
+# ============================================
 /.idea/
 .vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# Environment files
+# ============================================
+# Environment & Secrets (DO NOT COMMIT)
+# ============================================
 /.env
 /.env.local
-.env.example
+/.env.*.local
+.env.production
+web/.env
+web/.env.local
+web/.env.*.local
 
+# Note: .env.example should be committed as a template
+# so it's NOT in this ignore list
+
+# ============================================
+# Dream Records & Generated Content
+# ============================================
 # Dream records (generated JSON files)
 /web/dream-records/
 dream-records/
+*.json.backup
 
-# Generated videos
-/generated-videos/*.mp4
-/generated-videos/*.webm
+# Generated videos (all formats)
+/generated-videos/
+generated-videos/
 
-# Next.js build artifacts
+# ============================================
+# Next.js / React / Frontend
+# ============================================
 web/.next/
 web/out/
 web/build/
 web/.vercel
+web/.turbo/
+.turbo/
 
-# Node modules
-web/node_modules/
+# ============================================
+# Node / npm / yarn / pnpm
+# ============================================
 node_modules/
+web/node_modules/
+.npm/
+.yarn/cache/
+.yarn/install-state.gz
+.pnp.*
+.yarnrc.yml
 
-# Logs
+# Optional: Uncomment if you want to ignore lock files
+# (Not recommended for team projects)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ============================================
+# Logs & Debug Files
+# ============================================
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ============================================
+# OS Generated Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Test Coverage & Reports
+# ============================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+junit.xml
+
+# ============================================
+# Temporary Files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~.nib
+.cache/
+
+# ============================================
+# Documentation Build
+# ============================================
+docs/_build/
+docs/.doctrees/
+site/
