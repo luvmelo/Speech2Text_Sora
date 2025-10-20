@@ -90,14 +90,13 @@ public class DreamPromptEngineer {
                 .put("type", "input_text")
                 .put("text", buildUserInstructionWithBreathe(dreamNarrative));
 
-        // Add image as base64 per Responses multimodal input spec (image_url with data URL)
+        // Add image as base64 data URL per Responses multimodal input spec
         try {
             byte[] bytes = Files.readAllBytes(breatheImagePath);
             String base64 = Base64.getEncoder().encodeToString(bytes);
             ObjectNode imageNode = userContent.addObject();
             imageNode.put("type", "input_image");
-            ObjectNode imageUrl = imageNode.putObject("image_url");
-            imageUrl.put("url", "data:image/png;base64," + base64);
+            imageNode.put("image_url", "data:image/png;base64," + base64);
         } catch (Exception e) {
             throw new OpenAIException("Failed to read breathe image file", e);
         }
