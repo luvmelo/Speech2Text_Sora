@@ -111,3 +111,15 @@ When ready to enable Sora video generation:
 - Ensure microphone permissions are granted in browser
 - Check browser console for errors
 - Verify audio format is supported (WebM)
+
+
+
+export SKIP_VIDEO_GENERATION=true   
+
+export $(grep -v '^#' .env | xargs)  
+
+mvn -q compile   
+
+mvn org.codehaus.mojo:exec-maven-plugin:3.1.0:java \
+    -Dexec.mainClass=com.dreamvisualizer.server.DreamVisualizerServer \
+    -Dexec.cleanupDaemonThreads=false

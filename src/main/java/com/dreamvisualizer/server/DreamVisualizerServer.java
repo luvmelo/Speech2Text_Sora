@@ -78,14 +78,20 @@ public final class DreamVisualizerServer {
 
             String language = ctx.formParam("language");
             String transcriptOverride = ctx.formParam("transcript_override");
+            UploadedFile breatheImageFile = ctx.uploadedFile("breathe_image");
             VideoGenerationOptions.Builder videoOptions = VideoGenerationOptions.builder()
                     .aspectRatio("16:9")
                     .durationSeconds(5)
                     .format("mp4");
 
             Path tempFile = Files.createTempFile("dream-narration", determineSuffix(audioFile));
+            Path tempBreatheImage = null;
             try {
                 persistUploadedFile(audioFile, tempFile);
+                if (breatheImageFile != null) {
+                    tempBreatheImage = Files.createTempFile("breathe-image", determineSuffix(breatheImageFile));
+                    persistUploadedFile(breatheImageFile, tempBreatheImage);
+                }
 
                 long fileSize = Files.size(tempFile);
                 LOGGER.info("Received audio file: name='{}', contentType='{}', size={} bytes",
@@ -100,9 +106,9 @@ public final class DreamVisualizerServer {
                 if (transcriptOverride != null && !transcriptOverride.isBlank()) {
                     LOGGER.info("Using provided transcript override (length={} chars)", transcriptOverride.length());
                     SpeechTranscript transcript = buildTranscriptOverride(transcriptOverride);
-                    outcome = pipeline.runWithTranscript(transcript, videoOptions.build());
+                    outcome = pipeline.runWithTranscript(transcript, videoOptions.build(), Optional.ofNullable(tempBreatheImage));
                 } else {
-                    DreamVisualizationOutcome outcomeTemp = pipeline.run(transcriptionRequest.build(), videoOptions.build());
+                    DreamVisualizationOutcome outcomeTemp = pipeline.run(transcriptionRequest.build(), videoOptions.build(), Optional.ofNullable(tempBreatheImage));
                     outcome = outcomeTemp;
                 }
                 ObjectNode response = mapOutcome(mapper, outcome, Duration.between(started, Instant.now()));
@@ -121,8 +127,9 @@ public final class DreamVisualizerServer {
             } finally {
                 try {
                     Files.deleteIfExists(tempFile);
+                    if (tempBreatheImage != null) Files.deleteIfExists(tempBreatheImage);
                 } catch (IOException ioException) {
-                    LOGGER.warn("Failed to delete temp file {}", tempFile, ioException);
+                    LOGGER.warn("Failed to delete temp files", ioException);
                 }
             }
         });

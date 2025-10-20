@@ -73,7 +73,7 @@ export default function Home() {
     };
   }, [videoStatus]);
 
-  const handleSubmission = async ({ audio, duration }: { audio: Blob; duration: number }) => {
+  const handleSubmission = async ({ audio, duration, breatheImage }: { audio: Blob; duration: number; breatheImage?: string | null }) => {
     setError(null);
     setInsights(null); // Clear previous results
     setStatus("transcribing");
@@ -81,6 +81,18 @@ export default function Home() {
     const formData = new FormData();
     formData.append("audio", audio, `dream-${Date.now()}.webm`);
     formData.append("duration", String(duration));
+
+    if (breatheImage) {
+      // Convert data URL to Blob
+      const toBlob = async (dataUrl: string): Promise<Blob> => {
+        const res = await fetch(dataUrl);
+        return await res.blob();
+      };
+      try {
+        const imgBlob = await toBlob(breatheImage);
+        formData.append("breathe_image", imgBlob, `breathe-${Date.now()}.png`);
+      } catch {}
+    }
 
     try {
       // Stage 1: Transcribing

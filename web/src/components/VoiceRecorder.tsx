@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Circle, StopCircle, Loader2 } from "lucide-react";
+import { Circle, StopCircle, Loader2, Upload, X } from "lucide-react";
+import Image from "next/image";
 
 export interface VoiceRecorderProps {
-  onSubmit: (payload: { audio: Blob; duration: number }) => Promise<void>;
+  onSubmit: (payload: { audio: Blob; duration: number; breatheImage?: string | null }) => Promise<void>;
   disabled?: boolean;
 }
 
@@ -16,9 +17,12 @@ export default function VoiceRecorder({ onSubmit, disabled = false }: VoiceRecor
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [breatheImage, setBreatheImage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     return () => {
@@ -81,7 +85,7 @@ export default function VoiceRecorder({ onSubmit, disabled = false }: VoiceRecor
         chunksRef.current = [];
         setIsUploading(true);
         try {
-          await onSubmit({ audio: blob, duration: elapsedMs / 1000 });
+          await onSubmit({ audio: blob, duration: elapsedMs / 1000, breatheImage });
         } finally {
           setIsUploading(false);
         }
@@ -101,6 +105,46 @@ export default function VoiceRecorder({ onSubmit, disabled = false }: VoiceRecor
     mediaRecorderRef.current?.stream.getTracks().forEach((track) => track.stop());
   };
 
+  const handleFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setBreatheImage(result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFile(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFile(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
   const minutes = Math.floor(elapsedMs / 60000);
   const seconds = Math.floor((elapsedMs % 60000) / 1000)
     .toString()
@@ -111,7 +155,7 @@ export default function VoiceRecorder({ onSubmit, disabled = false }: VoiceRecor
 
   return (
     <section className="panel relative w-full overflow-hidden">
-      <div className="relative z-10 grid gap-10 p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="relative z-10 grid gap-10 p-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="max-w-2xl space-y-6 text-white/80">
           <div className="space-y-3">
             <p className="chip">Step 01 · Capture</p>
@@ -137,18 +181,70 @@ export default function VoiceRecorder({ onSubmit, disabled = false }: VoiceRecor
               <span className="text-xs text-white/60">Noise reduction active</span>
             </div>
             <div className="metric-card">
-              <h4>Status</h4>
-              <p className="text-base font-semibold text-white">
-                {recorderState === "recording" ? "Listening" : isUploading ? "Uploading" : "Idle"}
-              </p>
+              <h4>BREATHE</h4>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileInput}
+                className="hidden"
+              />
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => !breatheImage && fileInputRef.current?.click()}
+                className={`relative cursor-pointer rounded-lg border-2 border-dashed transition-all overflow-hidden
+                  ${isDragging ? 'border-white/60 bg-white/10' : 'border-white/30 hover:border-white/50'}
+                  ${breatheImage ? 'h-24' : 'h-24 flex items-center justify-center'}`}
+              >
+                <AnimatePresence mode="wait">
+                  {breatheImage ? (
+                    <motion.div
+                      key="image"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="relative w-full h-full"
+                    >
+                      <Image
+                        src={breatheImage}
+                        alt="Breathe data"
+                        fill
+                        className="object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBreatheImage(null);
+                        }}
+                        className="absolute top-1 right-1 p-1 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="upload"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex flex-col items-center justify-center gap-1 p-2 text-center"
+                    >
+                      <Upload className="w-5 h-5 text-white/60" />
+                      <p className="text-xs text-white/60">Upload chart</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <span className="text-xs text-white/60">
-                {isUploading ? "Transferring audio" : "Tap when the memory is clear"}
+                Night breathing sensor data
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-6 rounded-3xl border border-[rgba(255,255,255,0.22)] bg-[linear-gradient(150deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06))] px-10 py-8 text-center backdrop-blur-2xl shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
+        <div className="flex h-full flex-col items-center justify-center gap-6 rounded-3xl border border-[rgba(255,255,255,0.22)] bg-[linear-gradient(150deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06))] px-10 py-8 text-center backdrop-blur-2xl shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
           <motion.button
             type="button"
             onClick={recorderState === "recording" ? handleStop : handleStart}

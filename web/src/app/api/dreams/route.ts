@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
     const audio = formData.get('audio') as File;
     const duration = formData.get('duration') as string | null;
     const language = (formData.get('language') as string | null) ?? undefined;
+    const breatheImage = formData.get('breathe_image') as File | null;
 
     if (!audio) {
       return NextResponse.json(
@@ -41,6 +42,11 @@ export async function POST(request: NextRequest) {
     }
     if (language) {
       backendFormData.append('language', language);
+    }
+    if (breatheImage) {
+      const imgArrayBuf = await breatheImage.arrayBuffer();
+      const imgMime = breatheImage.type || 'image/png';
+      backendFormData.append('breathe_image', new Blob([Buffer.from(imgArrayBuf)], { type: imgMime }), breatheImage.name || `breathe-${Date.now()}.png`);
     }
 
     // Call Java backend with timeout

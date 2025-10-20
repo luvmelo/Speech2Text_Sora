@@ -11,6 +11,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Base64;
 
 /**
  * Layer 2: turns a raw transcription into a structured prompt for Sora.
@@ -62,6 +65,57 @@ public class DreamPromptEngineer {
         }
     }
 
+    public DreamPromptResult engineerPrompt(String dreamNarrative, Path breatheImagePath) {
+        Objects.requireNonNull(dreamNarrative, "dreamNarrative must not be null");
+        Objects.requireNonNull(breatheImagePath, "breatheImagePath must not be null");
+        ObjectMapper mapper = client.mapper();
+
+        ObjectNode payload = mapper.createObjectNode();
+        payload.put("model", config.getTextModel());
+
+        ArrayNode input = payload.putArray("input");
+
+        ObjectNode systemMessage = input.addObject();
+        systemMessage.put("role", "system");
+        ArrayNode systemContent = systemMessage.putArray("content");
+        systemContent.addObject()
+                .put("type", "input_text")
+                .put("text", PromptEngineeringConfig.DEFAULT_SYSTEM_PROMPT +
+                        "\nYou may also receive an image of a user's night breathing chart. Analyze breathing tempo, rhythm regularity, anomalies, and inferred mood/arousal. Use these to tune cinematography, pacing, motion intensity, camera movement, and music/sound descriptors in the final prompt. Keep safety and uncertainty in mind; if ambiguous, describe gently.");
+
+        ObjectNode userMessage = input.addObject();
+        userMessage.put("role", "user");
+        ArrayNode userContent = userMessage.putArray("content");
+        userContent.addObject()
+                .put("type", "input_text")
+                .put("text", buildUserInstructionWithBreathe(dreamNarrative));
+
+        // Add image as base64 per Responses multimodal input spec (image_url with data URL)
+        try {
+            byte[] bytes = Files.readAllBytes(breatheImagePath);
+            String base64 = Base64.getEncoder().encodeToString(bytes);
+            ObjectNode imageNode = userContent.addObject();
+            imageNode.put("type", "input_image");
+            ObjectNode imageUrl = imageNode.putObject("image_url");
+            imageUrl.put("url", "data:image/png;base64," + base64);
+        } catch (Exception e) {
+            throw new OpenAIException("Failed to read breathe image file", e);
+        }
+
+        ObjectNode textNode = payload.putObject("text");
+        textNode.set("format", PromptEngineeringConfig.defaultResponseFormat(mapper));
+
+        JsonNode response = client.postJson("responses", payload);
+        String jsonPayload = extractJsonOutput(response);
+
+        try {
+            JsonNode structured = mapper.readTree(jsonPayload);
+            return mapToResult(structured);
+        } catch (Exception e) {
+            throw new OpenAIException("Failed to parse structured JSON from GPT response: " + jsonPayload, e);
+        }
+    }
+
     private String buildUserInstruction(String narrative) {
         return """
                 USER DREAM NARRATIVE:
@@ -73,6 +127,27 @@ public class DreamPromptEngineer {
                 2. Identify concrete symbols, locations, or motifs. Retain surreal transitions or emotional pivots.
                 3. Craft a concise sora_prompt grounded in those beats, emphasising hazy dream cinematography.
                 4. Populate all JSON fields; use "none" only when the user explicitly states the absence of detail.
+                """;
+    }
+
+    private String buildUserInstructionWithBreathe(String narrative) {
+        return """
+                USER DREAM NARRATIVE:
+                """ + narrative.trim() + """
+
+                ----
+                Additional context:
+                - Attached image: user's night breathing chart. Analyze for tempo (bpm), variability, regularity, and notable patterns (e.g., apnea-like pauses, spikes). Summarize as short phrases.
+                
+                Instructions:
+                1. Extract the underlying story arc, even if fragmented.
+                2. Identify concrete symbols, locations, or motifs. Retain surreal transitions or emotional pivots.
+                3. Craft a concise sora_prompt grounded in those beats, emphasising hazy dream cinematography.
+                4. Incorporate breathing analysis to modulate style variables. Examples:
+                   - Rapid/irregular breathing → handheld camera, jittery cuts, kinetic motion, harsher textures.
+                   - Slow/regular breathing → steady dolly, long takes, soft motion, calmer palette.
+                   - Variable breathing → alternating pacing, shifting focal lengths.
+                5. Populate all JSON fields; use "none" only when the user explicitly states the absence of detail.
                 """;
     }
 
